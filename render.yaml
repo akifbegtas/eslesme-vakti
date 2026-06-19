@@ -1,0 +1,16 @@
+# Render Blueprint — Socket.IO sunucusunu (backend) barındırır.
+# Kurulum: render.com → New → Blueprint → bu repoyu seç → Apply.
+# Deploy bitince servis URL'sini (https://...onrender.com) GitHub Pages için
+# VITE_SERVER_URL değişkenine gir (README'deki adımlar).
+services:
+  - type: web
+    name: eslesme-vakti
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22.19.0
