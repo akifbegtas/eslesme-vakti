@@ -68,6 +68,10 @@ npx gh-pages -d client/dist
 Repo **Settings → Pages → Source: gh-pages / (root)**. Yayında:
 **https://<kullanıcı-adın>.github.io/eslesme-vakti/**
 
+> Render URL'si build'e gömülenden farklıysa, siteyi yeniden derlemeden
+> `?server=` ile geçici olarak bağlanabilirsin (adres tarayıcıya kaydedilir):
+> `https://<kullanıcı>.github.io/eslesme-vakti/?server=https://<gerçek-render-url>`
+
 ## Yapı
 ```
 shared/    types.ts · questions.ts (110 soru) · illustrations.ts
