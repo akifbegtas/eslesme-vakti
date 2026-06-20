@@ -16,6 +16,11 @@ export function imageUrl(keyword: string, seed: string): string {
   return `https://loremflickr.com/400/320/${tag}?lock=${hashString(seed)}`;
 }
 
+// fetch-photos script'i ile indirilmiş yerel görsel (Unsplash). BASE_URL ile.
+export function localPhotoUrl(id: string): string {
+  return `${import.meta.env.BASE_URL}photos/${id}.jpg`;
+}
+
 export function tenseLabel(t: Tense): string {
   switch (t) {
     case 'past':

@@ -72,6 +72,27 @@ Repo **Settings → Pages → Source: gh-pages / (root)**. Yayında:
 > `?server=` ile geçici olarak bağlanabilirsin (adres tarayıcıya kaydedilir):
 > `https://<kullanıcı>.github.io/eslesme-vakti/?server=https://<gerçek-render-url>`
 
+## Şık fotoğraflarını yükselt (Unsplash / Pexels)
+
+Varsayılan: anahtarsız LoremFlickr (gerçek foto, çoğu iyi). Daha **kaliteli ve
+tutarlı** (yatak odası/soyut dahil) görseller için kendi ücretsiz anahtarınla bir
+kez indir; görseller projeye gömülür (anahtar dışarı çıkmaz, repoya girmez):
+
+1. **Ücretsiz anahtar al** (biri yeter):
+   - **Pexels** (önerilir, limit yüksek → tek seferde biter): https://www.pexels.com/api/
+   - **Unsplash**: https://unsplash.com/developers → New Application → *Access Key*
+2. **İndir:**
+   ```bash
+   PEXELS_KEY=xxxx npm run photos      # ya da: UNSPLASH_KEY=xxxx npm run photos
+   ```
+   Saatlik limit dolarsa ~1 saat sonra aynı komutla devam (kaldığı yerden).
+3. **Yayınla:**
+   ```bash
+   npm run deploy:photos
+   ```
+Görseller `client/public/photos/<şıkId>.jpg` olur, oyunda **yerel + hızlı** yüklenir;
+eksik kalan şık olursa otomatik LoremFlickr → emoji yedeğine düşer.
+
 ## Yapı
 ```
 shared/    types.ts · questions.ts (110 soru) · illustrations.ts

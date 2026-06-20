@@ -14,7 +14,10 @@
     "dev:client": "npm --workspace client run dev",
     "build": "npm --workspace client run build",
     "start": "npm --workspace server run start",
-    "typecheck": "npm --workspace server run typecheck && npm --workspace client run typecheck"
+    "typecheck": "npm --workspace server run typecheck && npm --workspace client run typecheck",
+    "photos": "tsx scripts/fetch-photos.ts",
+    "build:photos": "VITE_USE_LOCAL_PHOTOS=1 VITE_BASE=/eslesme-vakti/ VITE_SERVER_URL=https://eslesme-vakti.onrender.com npm run build",
+    "deploy:photos": "npm run build:photos && touch client/dist/.nojekyll && npx -y gh-pages -d client/dist -t -b gh-pages"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

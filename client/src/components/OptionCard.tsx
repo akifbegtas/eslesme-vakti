@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { gradientCss } from '../../../shared/illustrations';
 import type { Option } from '../../../shared/types';
-import { imageUrl } from '../util';
+import { imageUrl, localPhotoUrl } from '../util';
 
 interface Props {
   option: Option;
@@ -12,6 +12,8 @@ interface Props {
   badges?: string[]; // bu şıkkı kim seçti (isimler)
 }
 
+const USE_LOCAL = import.meta.env.VITE_USE_LOCAL_PHOTOS === '1';
+
 export function OptionCard({
   option,
   onClick,
@@ -21,12 +23,15 @@ export function OptionCard({
   badges,
 }: Props) {
   const clickable = !!onClick;
+  const [stage, setStage] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
 
-  const url = option.imgPrompt ? imageUrl(option.imgPrompt, option.id) : null;
-  // Foto yüklenene kadar (ya da hata olursa) emoji + gradient yedek olarak görünür.
-  const showEmoji = !url || !loaded || failed;
+  // Görsel kaynak sırası: (varsa) yerel Unsplash → LoremFlickr → emoji
+  const sources: string[] = [];
+  if (USE_LOCAL) sources.push(localPhotoUrl(option.id));
+  if (option.imgPrompt) sources.push(imageUrl(option.imgPrompt, option.id));
+  const src = stage < sources.length ? sources[stage] : null;
+  const showEmoji = !src || !loaded;
 
   const cls = [
     'option',
@@ -45,14 +50,18 @@ export function OptionCard({
       onClick={onClick}
       role={clickable ? 'button' : undefined}
     >
-      {url && !failed && (
+      {src && (
         <img
+          key={src}
           className={`option-img ${loaded ? 'loaded' : ''}`}
-          src={url}
+          src={src}
           alt={option.label}
           loading="lazy"
           onLoad={() => setLoaded(true)}
-          onError={() => setFailed(true)}
+          onError={() => {
+            setLoaded(false);
+            setStage((s) => s + 1);
+          }}
         />
       )}
       <div className="option-scrim" />
