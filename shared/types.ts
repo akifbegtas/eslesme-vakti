@@ -6,8 +6,15 @@ export type Tense = 'past' | 'present' | 'future';
 export interface Option {
   id: string;
   label: string;
-  /** Emoji ya da illustrations.ts içindeki bir illüstrasyon anahtarı. */
+  /** Emoji — görsel yüklenene kadar / başarısız olursa yedek. */
   icon: string;
+  /** Şıkkın fotoğrafı için İngilizce anahtar kelime metni (stok foto araması). */
+  imgPrompt?: string;
+  /**
+   * Bakış açılı ("kim?") sorularda şıkkın kimi gösterdiği:
+   * 'self' = Ben/Benimki, 'other' = O/Onunki, 'shared' = ortak/üçüncü cevap.
+   */
+  role?: 'self' | 'other' | 'shared';
 }
 
 export interface Question {
@@ -16,6 +23,11 @@ export interface Question {
   text: string;
   /** 2–4 şık. Her şıkkın istisnasız bir görseli (icon) olur. */
   options: Option[];
+  /**
+   * true ise "kim?" tipi bakış açılı soru: eşleşme, iki partnerin AYNI kişiyi
+   * işaret etmesidir (biri 'Ben' diğeri 'O' derse aynı kişi → eşleşme).
+   */
+  perspective?: boolean;
 }
 
 // ---- Oyun durumu (clientlara gönderilen "public" görünüm) ----
@@ -60,8 +72,6 @@ export interface RevealPayload {
   /** playerId -> seçilen optionId (artık açık). Seçmeyen üye için alan olmaz. */
   selections: Record<string, string>;
   match: boolean;
-  /** Eşleşme olduysa ortak şık, yoksa null. */
-  matchedOptionId: string | null;
   scoreDelta: number;
   score: number;
   wrongs: number;

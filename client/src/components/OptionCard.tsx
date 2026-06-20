@@ -1,5 +1,7 @@
-import { gradientCss, resolveIcon } from '../../../shared/illustrations';
+import { useState } from 'react';
+import { gradientCss } from '../../../shared/illustrations';
 import type { Option } from '../../../shared/types';
+import { imageUrl } from '../util';
 
 interface Props {
   option: Option;
@@ -19,7 +21,13 @@ export function OptionCard({
   badges,
 }: Props) {
   const clickable = !!onClick;
-  const icon = resolveIcon(option.icon);
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const url = option.imgPrompt ? imageUrl(option.imgPrompt, option.id) : null;
+  // Foto yüklenene kadar (ya da hata olursa) emoji + gradient yedek olarak görünür.
+  const showEmoji = !url || !loaded || failed;
+
   const cls = [
     'option',
     clickable ? 'clickable' : '',
@@ -37,6 +45,18 @@ export function OptionCard({
       onClick={onClick}
       role={clickable ? 'button' : undefined}
     >
+      {url && !failed && (
+        <img
+          className={`option-img ${loaded ? 'loaded' : ''}`}
+          src={url}
+          alt={option.label}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+        />
+      )}
+      <div className="option-scrim" />
+
       {badges && badges.length > 0 && (
         <div className="option-badge">
           {badges.map((b, i) => (
@@ -46,14 +66,8 @@ export function OptionCard({
           ))}
         </div>
       )}
-      {icon.kind === 'svg' ? (
-        <div
-          className="option-emoji"
-          dangerouslySetInnerHTML={{ __html: icon.value }}
-        />
-      ) : (
-        <div className="option-emoji">{icon.value}</div>
-      )}
+
+      {showEmoji && <div className="option-emoji">{option.icon}</div>}
       <div className="option-label">{option.label}</div>
     </div>
   );

@@ -148,8 +148,7 @@ export function HostGame() {
                     .filter(([, oid]) => oid === opt.id)
                     .map(([pid]) => memberName(pid))
                 : undefined;
-              const isMatched =
-                !!reveal?.match && reveal.matchedOptionId === opt.id;
+              const isMatched = !!reveal?.match && (pickers?.length ?? 0) > 0;
               const dimmed = !!reveal && (pickers?.length ?? 0) === 0;
               return (
                 <OptionCard

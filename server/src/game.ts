@@ -3,6 +3,7 @@ import type {
   ClientToServerEvents,
   ServerToClientEvents,
   RevealPayload,
+  Question,
 } from '../../shared/types';
 import { getQuestion, shuffledQuestionIds } from '../../shared/questions';
 import {
@@ -117,6 +118,28 @@ export function handleSelect(io: IO, room: Room, playerId: string, optionId: str
   if (bothSelected) revealNow(io, room);
 }
 
+function roleOf(question: Question | undefined, optionId?: string) {
+  return optionId
+    ? question?.options.find((o) => o.id === optionId)?.role
+    : undefined;
+}
+
+/**
+ * Eşleşme kuralı:
+ * - Normal soru: iki partner AYNI şıkkı seçer.
+ * - Bakış açılı ("kim?") soru: aynı kişiyi işaret ederler — biri 'Ben' (self)
+ *   diğeri 'O' (other) derse aynı kişi → eşleşme. Ortak cevaplarda (Eşit,
+ *   İkimiz de, Başkası…) ise aynı şıkkı seçmeleri gerekir.
+ */
+function computeMatch(question: Question | undefined, a?: string, b?: string): boolean {
+  if (!a || !b) return false;
+  if (!question?.perspective) return a === b;
+  const ra = roleOf(question, a) ?? 'shared';
+  const rb = roleOf(question, b) ?? 'shared';
+  if (ra === 'shared' || rb === 'shared') return a === b;
+  return ra !== rb; // self + other → aynı kişi
+}
+
 export function revealNow(io: IO, room: Room): void {
   if (room.status !== 'question') return; // çift tetiklemeyi engelle
   clearTimers(room);
@@ -126,10 +149,11 @@ export function revealNow(io: IO, room: Room): void {
   room.status = 'reveal';
   room.readyForNext.clear();
 
+  const question = getQuestion(room.questionOrder[room.currentQuestionIndex]);
   const [m0, m1] = couple.memberIds;
   const sel0 = room.selections.get(m0);
   const sel1 = room.selections.get(m1);
-  const match = !!sel0 && !!sel1 && sel0 === sel1;
+  const match = computeMatch(question, sel0, sel1);
 
   if (match) {
     couple.score += 1;
@@ -145,7 +169,6 @@ export function revealNow(io: IO, room: Room): void {
     coupleId: couple.id,
     selections,
     match,
-    matchedOptionId: match ? sel0! : null,
     scoreDelta: match ? 1 : 0,
     score: couple.score,
     wrongs: couple.wrongs,

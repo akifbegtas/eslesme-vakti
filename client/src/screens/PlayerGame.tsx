@@ -119,8 +119,7 @@ export function PlayerGame() {
                 const pickers = Object.entries(reveal.selections)
                   .filter(([, oid]) => oid === opt.id)
                   .map(([pid]) => memberName(pid));
-                const isMatched =
-                  reveal.match && reveal.matchedOptionId === opt.id;
+                const isMatched = reveal.match && pickers.length > 0;
                 return (
                   <OptionCard
                     key={opt.id}
