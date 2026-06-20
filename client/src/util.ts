@@ -9,22 +9,10 @@ function hashString(str: string): number {
   return Math.abs(h);
 }
 
-const STOPWORDS = new Set([
-  'a', 'an', 'the', 'of', 'in', 'on', 'at', 'for', 'to', 'and', 'with', 'two',
-  'some', 'few', 'very', 'as', 'by',
-]);
-
-// LoremFlickr ile anahtarsız GERÇEK stok fotoğraf. Prompt'tan anahtar kelimeler
-// çıkarılır; seed (option.id) sabit "lock" verir → aynı şık hep aynı fotoğraf.
-export function imageUrl(prompt: string, seed: string): string {
-  const kws = prompt
-    .toLowerCase()
-    .replace(/[^a-z\s]/g, ' ')
-    .split(/\s+/)
-    .filter((w) => w.length > 1 && !STOPWORDS.has(w))
-    .slice(0, 3)
-    .join(',');
-  const tag = encodeURIComponent(kws || 'love');
+// LoremFlickr ile anahtarsız GERÇEK stok fotoğraf. imgPrompt artık tek güçlü
+// anahtar kelime; seed (option.id) sabit "lock" verir → aynı şık hep aynı foto.
+export function imageUrl(keyword: string, seed: string): string {
+  const tag = encodeURIComponent(keyword.trim().toLowerCase() || 'love');
   return `https://loremflickr.com/400/320/${tag}?lock=${hashString(seed)}`;
 }
 
