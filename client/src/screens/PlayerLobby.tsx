@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useGame } from '../store';
 
 export function PlayerLobby() {
@@ -6,10 +7,12 @@ export function PlayerLobby() {
     snapshot,
     playerId,
     myCoupleId,
+    isHost,
     code,
     createCouple,
     joinCouple,
     leaveCouple,
+    hostStart,
     goHome,
   } = useGame();
   const [coupleName, setCoupleName] = useState('');
@@ -33,6 +36,24 @@ export function PlayerLobby() {
     <div className="screen screen--narrow center-col">
       <span className="pill">Oda {code}</span>
       <h2>Merhaba {me?.name ?? ''} 👋</h2>
+
+      {isHost && (
+        <div
+          className="card stack"
+          style={{ width: '100%', alignItems: 'center' }}
+        >
+          <span className="muted">Eşin bu QR ya da kod ile girsin 👇</span>
+          <div className="qr-box">
+            <QRCodeSVG
+              value={`${window.location.origin}${import.meta.env.BASE_URL}?code=${code}`}
+              size={150}
+            />
+          </div>
+          <div className="code-big" style={{ fontSize: 52 }}>
+            {code}
+          </div>
+        </div>
+      )}
 
       {myCouple ? (
         <div className="card stack" style={{ width: '100%' }}>
@@ -82,6 +103,24 @@ export function PlayerLobby() {
               ))}
             </div>
           )}
+        </>
+      )}
+
+      {isHost && (
+        <>
+          <button
+            className="btn btn--accent btn--lg btn--block"
+            disabled={
+              !(
+                snapshot.couples.length >= 1 &&
+                snapshot.couples.every((c) => c.memberIds.length === 2)
+              )
+            }
+            onClick={hostStart}
+          >
+            Oyunu Başlat ▶
+          </button>
+          <p className="muted">Herkes çiftini kurunca başlat.</p>
         </>
       )}
 

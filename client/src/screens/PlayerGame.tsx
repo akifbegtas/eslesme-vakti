@@ -2,6 +2,7 @@ import { useGame } from '../store';
 import { OptionCard } from '../components/OptionCard';
 import { Timer } from '../components/Timer';
 import { Confetti } from '../components/Confetti';
+import { ScoreBoard } from '../components/ScoreBoard';
 import { tenseLabel } from '../util';
 
 export function PlayerGame() {
@@ -9,13 +10,17 @@ export function PlayerGame() {
     snapshot,
     playerId,
     myCoupleId,
+    isHost,
     question,
     reveal,
     selectedPlayerIds,
     readyPlayerIds,
     mySelection,
+    leaderboard,
     select,
     ready,
+    hostRestart,
+    goHome,
   } = useGame();
   if (!snapshot) return null;
 
@@ -28,6 +33,7 @@ export function PlayerGame() {
 
   // ---- BİTİŞ ----
   if (snapshot.status === 'finished') {
+    const board = leaderboard ?? [...snapshot.couples].sort((a, b) => b.score - a.score);
     const myCouple = snapshot.couples.find((c) => c.id === myCoupleId);
     return (
       <div className="screen screen--narrow center-col">
@@ -38,7 +44,23 @@ export function PlayerGame() {
             {myCouple.name}: {myCouple.score} 💞
           </div>
         )}
-        <p className="subtitle">Sonuçlar ana ekranda!</p>
+        {isHost ? (
+          <>
+            <div className="card" style={{ width: '100%' }}>
+              <ScoreBoard couples={board} />
+            </div>
+            <div className="row">
+              <button className="btn btn--accent" onClick={hostRestart}>
+                Tekrar Oyna
+              </button>
+              <button className="btn btn--ghost" onClick={goHome}>
+                Çık
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="subtitle">Sonuçlar ana ekranda!</p>
+        )}
       </div>
     );
   }

@@ -26,8 +26,8 @@ interface QuestionState {
 }
 
 interface Session {
-  role: Role;
   code: string;
+  isHost?: boolean;
   playerId?: string;
 }
 
@@ -53,6 +53,7 @@ function saveSession(s: Session | null): void {
 interface GameContextValue {
   connected: boolean;
   role: Role;
+  isHost: boolean; // bu cihaz odayı kurdu mu (oyuncu da olabilir)
   code: string;
   playerId: string | null;
   snapshot: RoomSnapshot | null;
@@ -69,6 +70,7 @@ interface GameContextValue {
   myCoupleId: string | null;
   // aksiyonlar
   hostCreate: () => void;
+  hostPlayHere: (name: string) => void; // oda kuran kişi bu cihazdan da oynar
   hostStart: () => void;
   hostRestart: () => void;
   playerJoin: (code: string, name: string) => void;
@@ -85,6 +87,7 @@ const GameContext = createContext<GameContextValue | null>(null);
 export function GameProvider({ children }: { children: ReactNode }) {
   const [connected, setConnected] = useState(socket.connected);
   const [role, setRole] = useState<Role>('home');
+  const [isHost, setIsHost] = useState(false);
   const [code, setCode] = useState('');
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<RoomSnapshot | null>(null);
@@ -115,27 +118,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setConnected(true);
       const s = sessionRef.current;
       if (!s) return;
-      // Yeniden bağlanınca oturumu geri yükle.
-      if (s.role === 'host') {
+      // Yeniden bağlanınca oturumu geri yükle (bir cihaz hem host hem oyuncu olabilir).
+      setCode(s.code);
+      setIsHost(!!s.isHost);
+      // Oyuncu kimliği varsa görünüm 'player', yoksa salt host (pano).
+      setRole(s.playerId ? 'player' : s.isHost ? 'host' : 'home');
+      if (s.isHost) {
         socket.emit('host:resume', { code: s.code }, (res) => {
-          if (res.ok) {
-            setRole('host');
-            setCode(s.code);
-          } else {
+          if (!res.ok && !s.playerId) {
             sessionRef.current = null;
             saveSession(null);
+            setRole('home');
+            setIsHost(false);
           }
         });
-      } else if (s.role === 'player' && s.playerId) {
+      }
+      if (s.playerId) {
         socket.emit('player:rejoin', { code: s.code, playerId: s.playerId }, (res) => {
           if (res.ok) {
-            setRole('player');
-            setCode(s.code);
             setPlayerId(res.playerId ?? s.playerId ?? null);
             if (res.snapshot) setSnapshot(res.snapshot);
           } else {
             sessionRef.current = null;
             saveSession(null);
+            setRole('home');
+            setIsHost(false);
           }
         });
       }
@@ -204,6 +211,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const value: GameContextValue = {
     connected,
     role,
+    isHost,
     code,
     playerId,
     snapshot,
@@ -222,13 +230,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
       socket.emit('host:create', (res) => {
         if (res.ok && res.code) {
           setRole('host');
+          setIsHost(true);
           setCode(res.code);
           resetGameState();
-          const s: Session = { role: 'host', code: res.code };
+          const s: Session = { code: res.code, isHost: true };
           sessionRef.current = s;
           saveSession(s);
         } else {
           setError(res.error ?? 'Oda oluşturulamadı.');
+        }
+      });
+    },
+    hostPlayHere: (name) => {
+      // Oda kuran cihaz aynı zamanda oyuncu olur; görünüm oyuncuya döner.
+      socket.emit('player:join', { code, name }, (res) => {
+        if (res.ok && res.playerId) {
+          setRole('player');
+          setPlayerId(res.playerId);
+          if (res.snapshot) setSnapshot(res.snapshot);
+          const s: Session = { code, isHost: true, playerId: res.playerId };
+          sessionRef.current = s;
+          saveSession(s);
+        } else {
+          setError(res.error ?? 'Bu cihazdan oyuncu eklenemedi.');
         }
       });
     },
@@ -244,12 +268,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       socket.emit('player:join', { code: joinCode.toUpperCase(), name }, (res) => {
         if (res.ok && res.playerId) {
           setRole('player');
+          setIsHost(false);
           setCode(joinCode.toUpperCase());
           setPlayerId(res.playerId);
           resetGameState();
           if (res.snapshot) setSnapshot(res.snapshot);
           const s: Session = {
-            role: 'player',
             code: joinCode.toUpperCase(),
             playerId: res.playerId,
           };
@@ -284,6 +308,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       sessionRef.current = null;
       saveSession(null);
       setRole('home');
+      setIsHost(false);
       setCode('');
       setPlayerId(null);
       resetGameState();

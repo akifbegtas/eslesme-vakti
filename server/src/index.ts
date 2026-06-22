@@ -59,7 +59,7 @@ if (existsSync(clientDist)) {
 // Soket başına bağlam (oda/rol/oyuncu) — generic karmaşası olmadan.
 interface SocketCtx {
   code: string;
-  role: 'host' | 'player';
+  isHost?: boolean;
   playerId?: string;
 }
 const socketCtx = new Map<string, SocketCtx>();
@@ -81,7 +81,7 @@ io.on('connection', (socket) => {
     const room = createRoom(socket.id);
     room.emptySince = null;
     socket.join(room.code);
-    socketCtx.set(socket.id, { code: room.code, role: 'host' });
+    socketCtx.set(socket.id, { code: room.code, isHost: true });
     ack({ ok: true, code: room.code });
     socket.emit('room:update', snapshot(room));
   });
@@ -95,7 +95,7 @@ io.on('connection', (socket) => {
     room.hostSocketId = socket.id;
     room.emptySince = null;
     socket.join(room.code);
-    socketCtx.set(socket.id, { code: room.code, role: 'host' });
+    socketCtx.set(socket.id, { ...socketCtx.get(socket.id), code: room.code, isHost: true });
     ack({ ok: true });
     socket.emit('room:update', snapshot(room));
     const q = currentQuestionPayload(room);
@@ -125,7 +125,7 @@ io.on('connection', (socket) => {
     }
     const player = addPlayer(room, name, socket.id);
     socket.join(room.code);
-    socketCtx.set(socket.id, { code: room.code, role: 'player', playerId: player.id });
+    socketCtx.set(socket.id, { ...socketCtx.get(socket.id), code: room.code, playerId: player.id });
     ack({ ok: true, playerId: player.id, coupleId: null, snapshot: snapshot(room) });
     broadcast(io, room);
   });
@@ -141,7 +141,7 @@ io.on('connection', (socket) => {
     room.socketToPlayer.set(socket.id, player.id);
     room.emptySince = null;
     socket.join(room.code);
-    socketCtx.set(socket.id, { code: room.code, role: 'player', playerId: player.id });
+    socketCtx.set(socket.id, { ...socketCtx.get(socket.id), code: room.code, playerId: player.id });
     ack({ ok: true, playerId: player.id, coupleId: player.coupleId, snapshot: snapshot(room) });
     broadcast(io, room);
     const q = currentQuestionPayload(room);
@@ -196,14 +196,12 @@ io.on('connection', (socket) => {
     if (!ctx) return;
     const room = getRoom(ctx.code);
     if (!room) return;
-    if (ctx.role === 'host' && room.hostSocketId === socket.id) {
-      room.hostSocketId = null;
-    } else if (ctx.role === 'player') {
-      const player = playerBySocket(room, socket.id);
-      if (player) {
-        player.connected = false;
-        player.socketId = null;
-      }
+    // Bir soket hem host hem oyuncu olabilir; ikisini de temizle.
+    if (room.hostSocketId === socket.id) room.hostSocketId = null;
+    const player = playerBySocket(room, socket.id);
+    if (player) {
+      player.connected = false;
+      player.socketId = null;
       room.socketToPlayer.delete(socket.id);
     }
     if (isRoomEmpty(room) && room.emptySince === null) {

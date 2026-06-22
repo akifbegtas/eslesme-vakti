@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useGame } from '../store';
 
 export function HostLobby() {
-  const { code, snapshot, hostStart, goHome } = useGame();
+  const { code, snapshot, hostStart, hostPlayHere, goHome } = useGame();
+  const [hostName, setHostName] = useState('');
   if (!snapshot) return <div className="screen center-col"><p className="muted">Oda hazırlanıyor…</p></div>;
 
   const joinBase = `${window.location.origin}${import.meta.env.BASE_URL}`;
@@ -66,6 +68,30 @@ export function HostLobby() {
               Çift kurmayanlar: {ungrouped.map((p) => p.name).join(', ')}
             </p>
           )}
+        </div>
+
+        <div className="card stack" style={{ width: '100%', maxWidth: 720 }}>
+          <h3>📱 Bu cihazdan ben de oynayacağım</h3>
+          <p className="muted">
+            Ayrı ekranın yoksa: adını yaz, bu cihaz hem pano hem senin oyuncun
+            olsun. Eşin de kendi telefonundan kodla girip çiftine katılır.
+          </p>
+          <div className="row">
+            <input
+              className="input"
+              placeholder="Adın"
+              value={hostName}
+              maxLength={24}
+              onChange={(e) => setHostName(e.target.value)}
+            />
+            <button
+              className="btn"
+              disabled={hostName.trim().length < 1}
+              onClick={() => hostPlayHere(hostName.trim())}
+            >
+              Oynamaya katıl
+            </button>
+          </div>
         </div>
 
         <button
