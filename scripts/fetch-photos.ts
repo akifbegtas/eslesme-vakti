@@ -9,7 +9,7 @@
  * Tekrar çalıştırılabilir: indirilmiş dosyaları atlar (limit dolarsa 1 saat sonra
  * tekrar çalıştır, kaldığı yerden devam eder).
  */
-import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -86,6 +86,19 @@ async function main() {
     existsSync(OUT) ? (await readdir(OUT)).map((f) => f.replace(/\.jpg$/, '')) : []
   );
 
+  // Manifest: hangi şıkkın hangi anahtar kelimeyle indirildiği.
+  // Anahtar kelime değiştiyse o şık yeniden indirilir (gerisi atlanır).
+  const manifestPath = join(OUT, '_manifest.json');
+  let manifest: Record<string, string> = {};
+  if (existsSync(manifestPath)) {
+    try {
+      manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    } catch {
+      /* yok say */
+    }
+  }
+  const newManifest: Record<string, string> = { ...manifest };
+
   const keywords = [...byKeyword.keys()];
   console.log(`Sağlayıcı: ${provider} · ${keywords.length} benzersiz anahtar · ${QUESTIONS.reduce((n, q) => n + q.options.length, 0)} şık`);
 
@@ -95,7 +108,8 @@ async function main() {
 
   for (const kw of keywords) {
     const ids = byKeyword.get(kw)!;
-    const missing = ids.filter((id) => !existing.has(id));
+    // Dosya yoksa VEYA anahtar kelime değiştiyse yeniden indir.
+    const missing = ids.filter((id) => !existing.has(id) || manifest[id] !== kw);
     if (missing.length === 0) {
       done += ids.length;
       continue;
@@ -123,6 +137,7 @@ async function main() {
       const ok = await download(pick, join(OUT, `${id}.jpg`));
       if (ok) {
         existing.add(id);
+        newManifest[id] = kw;
         done++;
       }
       await sleep(60);
@@ -131,6 +146,7 @@ async function main() {
     await sleep(120); // sağlayıcıya nazik ol
   }
 
+  await writeFile(manifestPath, JSON.stringify(newManifest));
   console.log('');
   const total = QUESTIONS.reduce((n, q) => n + q.options.length, 0);
   console.log(`Bitti: ${done}/${total} şık görseli hazır (bu çalıştırmada ${fetched} arama).`);

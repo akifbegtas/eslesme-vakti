@@ -30,6 +30,11 @@ export function App() {
 
   return (
     <div className="app">
+      <div className="rotate-hint">
+        <div className="rotate-hint__icon">📱</div>
+        <h2>Telefonu yan çevir</h2>
+        <p>Eşleşme Vakti yatay (yan) modda oynanır 🔄</p>
+      </div>
       {content}
       {error && <Toast message={error} onClose={clearError} />}
     </div>

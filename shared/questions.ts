@@ -151,13 +151,14 @@ function roleFor(label: string): 'self' | 'other' | 'shared' {
 
 export const QUESTIONS: Question[] = RAW.map((q, i): Question => {
   const qid = `q${pad(i + 1)}`;
-  const options: Option[] = q.options.map((o, j) => ({
-    id: `${qid}-${j}`,
-    label: o[0],
-    icon: o[1],
-    imgPrompt: o[2],
-    role: roleFor(o[0]),
-  }));
+  const options: Option[] = q.options.map((o, j) => {
+    const role = roleFor(o[0]);
+    // "Kim?" şıklarında kişi fotoğrafı kullan: Ben/Benimki = selfie (kendi),
+    // O/Onunki = portre (karşıdaki). Nesne yerine kişi → anlamlı ve tutarlı.
+    const imgPrompt =
+      role === 'self' ? 'selfie' : role === 'other' ? 'portrait' : o[2];
+    return { id: `${qid}-${j}`, label: o[0], icon: o[1], imgPrompt, role };
+  });
   // Hem self hem other şıkkı varsa bu bir bakış açılı ("kim?") sorudur.
   const perspective =
     options.some((o) => o.role === 'self') &&
