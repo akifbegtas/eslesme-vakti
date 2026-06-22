@@ -151,7 +151,9 @@ function roleFor(label: string): 'self' | 'other' | 'shared' {
 
 export const QUESTIONS: Question[] = RAW.map((q, i): Question => {
   const qid = `q${pad(i + 1)}`;
-  const options: Option[] = q.options.map((o, j) => {
+  // Her soru tam 2 şık: çoktan seçmeli olanlarda ilk iki şık kullanılır
+  // (fotoğrafları zaten q-0/q-1'de yüklü olduğundan yeniden indirme gerekmez).
+  const options: Option[] = q.options.slice(0, 2).map((o, j) => {
     const role = roleFor(o[0]);
     // "Kim?" şıklarında kişi fotoğrafı kullan: Ben/Benimki = selfie (kendi),
     // O/Onunki = portre (karşıdaki). Nesne yerine kişi → anlamlı ve tutarlı.
