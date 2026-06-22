@@ -8,20 +8,20 @@ export interface Gradient {
   to: string;
 }
 
-// Romantik / sıcak palet.
+// Lacivert / gri / çelik mavisi palet (koyu tema).
 export const GRADIENTS: Gradient[] = [
-  { from: '#ff9a9e', to: '#fad0c4' },
-  { from: '#a18cd1', to: '#fbc2eb' },
-  { from: '#ff758c', to: '#ff7eb3' },
-  { from: '#f6d365', to: '#fda085' },
-  { from: '#fbc2eb', to: '#a6c1ee' },
-  { from: '#fccb90', to: '#d57eeb' },
-  { from: '#e0c3fc', to: '#8ec5fc' },
-  { from: '#f093fb', to: '#f5576c' },
-  { from: '#fa709a', to: '#fee140' },
-  { from: '#ff6a88', to: '#ff99ac' },
-  { from: '#c471f5', to: '#fa71cd' },
-  { from: '#48c6ef', to: '#6f86d6' },
+  { from: '#1e3c72', to: '#2a5298' },
+  { from: '#141e30', to: '#243b55' },
+  { from: '#0f2027', to: '#2c5364' },
+  { from: '#283e51', to: '#4b79a1' },
+  { from: '#232526', to: '#414345' },
+  { from: '#16222a', to: '#3a6073' },
+  { from: '#2c3e50', to: '#3f5e76' },
+  { from: '#1c1f2b', to: '#3b4a6b' },
+  { from: '#0b486b', to: '#3a7bd5' },
+  { from: '#36464e', to: '#5e7c8b' },
+  { from: '#1a2980', to: '#26415e' },
+  { from: '#42475a', to: '#1c1f2b' },
 ];
 
 function hashString(str: string): number {
